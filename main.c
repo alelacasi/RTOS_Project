@@ -163,7 +163,7 @@ const char* getfield(char* line, int num)
 void *universalthread(void *ptr)
 {
 	struct thread_args *args = ptr;
-	FILE* stream = fopen("/public/coen320/Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv", "r");
+	FILE* stream = fopen("Driving Data(KIA SOUL)_(150728-160714)_(10 Drivers_A-J).csv", "r");
     char line[2048];
     char* value;
     int num = args->loc;
@@ -172,11 +172,7 @@ void *universalthread(void *ptr)
     {
         char* tmp = strdup(line);    
         const char* tok;
-    	for (tok = strtok(line, ","); tok && *tok; tok = strtok(NULL, ",\n"))
-    	{
-		    if (!--num)
-		        value = tok;
-		}
+        value = getfield(line, args->filename)
     	printf("%s: %s\n",args->filename, value);
         sleep(2);
 
