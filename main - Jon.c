@@ -174,50 +174,50 @@ int main (int argc, char *argv[]) {
 	fuel_consumption = malloc(sizeof(struct thread_args));
     fuel_consumption->filename = "fuel_consumption";
     fuel_consumption->loc = 1;
-    fuel_consumption->sleep_ms = 100;
+    fuel_consumption->sleep_ms = 10;
     fuel_consumption->looptime = 100;
 
     engine_speed = malloc(sizeof(struct thread_args));
 	engine_speed->filename = "engine_speed";    //10ms  @1
 	engine_speed->loc = 13;    //10ms  @1
-	engine_speed->sleep_ms = 100;    //10ms  @1
-	engine_speed->looptime = 100;    //10ms  @1
+	engine_speed->sleep_ms = 500;    //10ms  @1
+	engine_speed->looptime = 2;    //10ms  @1
 
 	engine_coolant_temp = malloc(sizeof(struct thread_args));
 	engine_coolant_temp->filename = "engine_coolant_temp";    //10ms  @1
 	engine_coolant_temp->loc = 18;    //10ms  @1
-	engine_coolant_temp->sleep_ms = 100;    //10ms  @1
-	engine_coolant_temp->looptime = 100;    //10ms  @1
+	engine_coolant_temp->sleep_ms = 2,000;    //10ms  @1
+	engine_coolant_temp->looptime = 0;    //10ms  @1
 
 	current_gear = malloc(sizeof(struct thread_args));
 	current_gear->filename = "current_gear";    //10ms  @1
 	current_gear->loc = 34;    //10ms  @1
 	current_gear->sleep_ms = 100;    //10ms  @1
-	current_gear->looptime = 100;    //10ms  @1
+	current_gear->looptime = 10;    //10ms  @1
 
 	transmission_oil_temperature = malloc(sizeof(struct thread_args));
 	transmission_oil_temperature->filename = "transmission_oil_temperature";    //10ms  @1
 	transmission_oil_temperature->loc = 35;    //10ms  @1
-	transmission_oil_temperature->sleep_ms = 100;    //10ms  @1
-	transmission_oil_temperature->looptime = 100;    //10ms  @1
+	transmission_oil_temperature->sleep_ms = 5000;    //10ms  @1
+	transmission_oil_temperature->looptime = 0;    //10ms  @1
 
 	vehicle_speed = malloc(sizeof(struct thread_args));
 	vehicle_speed->filename = "vehicle_speed";    //10ms  @1
 	vehicle_speed->loc = 44;    //10ms  @1
 	vehicle_speed->sleep_ms = 100;    //10ms  @1
-	vehicle_speed->looptime = 100;    //10ms  @1
+	vehicle_speed->looptime = 10;    //10ms  @1
 
 	acceleration_speed_longitudinal = malloc(sizeof(struct thread_args));
 	acceleration_speed_longitudinal->filename = "acceleration_speed_longitudinal";    //10ms  @1
 	acceleration_speed_longitudinal->loc = 45;    //10ms  @1
-	acceleration_speed_longitudinal->sleep_ms = 100;    //10ms  @1
-	acceleration_speed_longitudinal->looptime = 100;    //10ms  @1
+	acceleration_speed_longitudinal->sleep_ms = 150;    //10ms  @1
+	acceleration_speed_longitudinal->looptime = 7;    //10ms  @1
 
 	indication_of_brake_switch = malloc(sizeof(struct thread_args));
 	indication_of_brake_switch->filename = "indication_of_brake_switch";    //10ms  @1
 	indication_of_brake_switch->loc = 46;    //10ms  @1
 	indication_of_brake_switch->sleep_ms = 100;    //10ms  @1
-	indication_of_brake_switch->looptime = 100;    //10ms  @1
+	indication_of_brake_switch->looptime = 10;    //10ms  @1
 
     //Timer
 	pthread_create(NULL, NULL, (void *) &task_body, NULL);
