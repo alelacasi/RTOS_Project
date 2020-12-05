@@ -50,22 +50,33 @@ int main ()
     engine_cool_press.sleep_ms = 2,000 ;    //2s    @18
     current_gear.sleep_ms = 100;         //100ms @34
 
-    fuel_consumption.sleep_ms = 100;    //10ms  @1
-    engine_speed.sleep_ms = 2;         //500ms @13
-    engine_cool_press.sleep_ms = 0 ;    //2s    @18
-    current_gear.sleep_ms = 10;         //100ms @34    
+    fuel_consumption.looptime = 100;    //10ms  @1
+    engine_speed.looptime = 2;         //500ms @13
+    engine_cool_press.looptime = 0 ;    //2s    @18
+    current_gear.looptime = 10;         //100ms @34
+
+    pthread_t	fuel_thread_id;
+    pthread_t	speed_thread_id;
+    pthread_t	cool_thread_id;
+    pthread_t	gear_thread_id;    
 
 
  
 	printf("We are now creating four threads...\n");
-	pthread_create(NULL,NULL, (void *) &universalthread, (void *) &fuel_consumption);
-	pthread_create(NULL,NULL, (void *) &universalthread, (void *) &engine_speed);
-	pthread_create(NULL,NULL, (void *) &universalthread, (void *) &engine_cool_press);
-	pthread_create(NULL,NULL, (void *) &universalthread, (void *) &current_gear);
+	pthread_create(&fuel_thread_id,NULL, (void *) &universalthread, (void *) &fuel_consumption);
+	pthread_create(&speed_thread_id,NULL, (void *) &universalthread, (void *) &engine_speed);
+	pthread_create(&cool_thread_id,NULL, (void *) &universalthread, (void *) &engine_cool_press);
+	pthread_create(&gear_thread_id,NULL, (void *) &universalthread, (void *) &current_gear);
+
 	printf("Threads created.\n");
 
 	printf("Main thread now waiting for first thread to finish\n");
 	
+    pthread_join(fuel_thread_id); 
+    pthread_join(speed_thread_id); 
+    pthread_join(cool_thread_id); 
+    pthread_join(gear_thread_id);
+
 	printf("Main thread now waiting for termination through user.\n");
 	printf("Other threads keep running in the background until\n");
 	printf("they finish or are terminated together with the main thread.\n");
@@ -74,27 +85,6 @@ int main ()
 
 	return EXIT_SUCCESS;
 }
-
-
-void *functionA()
-{
-	
-	
-	
-	printf("functionA active\n");
-	sleep(5);
-	printf ("functionA is finished.\n");
-	return(NULL);
-}
-
-void *functionB()
-{
-
-	printf("functionB is working...\n");
-	sleep (7);
-	printf("functionB done.\n");
-	return(NULL);
-}	
 
 const char* getfield(char* line, int num)
 {
@@ -109,7 +99,6 @@ const char* getfield(char* line, int num)
 
 void *universalthread(void *ptr)
 {
-    
 	struct thread_args *args = ptr;
 	FILE* stream = fopen("public/coen320/dataset.csv", "r");
     char line[2048];
@@ -131,8 +120,6 @@ void *universalthread(void *ptr)
             sleep(args->sleep_ms);
             count--;
         }
-        
-
         // NOTE strtok clobbers tmp
         free(tmp);
     }
