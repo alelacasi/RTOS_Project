@@ -135,7 +135,7 @@ int main (int argc, char *argv[]) {
 	engine_coolant_temp = (struct thread_args *) malloc(sizeof(struct thread_args));
 	engine_coolant_temp->filename = "engine_coolant_temp";    //10ms  @1
 	engine_coolant_temp->loc = 18;    //10ms  @1
-	engine_coolant_temp->sleep_ms = 2,000;    //10ms  @1
+	engine_coolant_temp->sleep_ms = 2000;    //10ms  @1
 	engine_coolant_temp->looptime = 0;    //10ms  @1
 
 	current_gear = (struct thread_args *) malloc(sizeof(struct thread_args));
