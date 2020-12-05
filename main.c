@@ -168,12 +168,6 @@ int main (int argc, char *argv[]) {
 	indication_of_brake_switch->sleep_ms = 100;    //10ms  @1
 	indication_of_brake_switch->looptime = 10;    //10ms  @1
 
-	indication_of_brake_switch = (struct thread_args *) malloc(sizeof(struct thread_args));
-	indication_of_brake_switch->filename = "indication_of_brake_switch";    //10ms  @1
-	indication_of_brake_switch->loc = 46;    //10ms  @1
-	indication_of_brake_switch->sleep_ms = 100;    //10ms  @1
-	indication_of_brake_switch->looptime = 100;    //10ms  @1
-
     //Timer
 	//pthread_create(NULL, NULL, (void *) &task_body, NULL);
 
