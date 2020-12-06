@@ -77,6 +77,17 @@ void *universalThread(void *ptr)
         usleep(args->sleep_ms*1000);
         count--;
 
+		//Should work for 2s & 5s, not perfect for all cases tho
+		if(args->sleep_ms%1000 == 0){
+			int hold = args->sleep_ms/1000;
+			while (hold>0)	//I think >0 works but maybe not, haven't debug
+			{
+				fgets(line, 2048, stream);
+				hold--;
+			}
+			
+		}
+
         while (count>0)
         {
             printf("%s: %s\n",args->filename, value);
