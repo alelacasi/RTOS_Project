@@ -26,7 +26,7 @@ sigset_t sigst;
 
 double currentTime = 0.0;
 
-void *universalthread(void *ptr);
+void *producer(void *ptr);
 
 struct thread_args
 {
@@ -48,7 +48,7 @@ const char* getfield(char* line, int num)
 }
 
 
-void *universalThread(void *ptr)
+void *producer(void *ptr)
 {
 	struct thread_args *args = (struct thread_args *)ptr;
 	//int executionTimer = 0;
@@ -184,14 +184,14 @@ int main (int argc, char *argv[]) {
 
 	//Producers
 	printf("We are now creating the producers...\n");
-	pthread_create(&fuel_thread_id, NULL, (void *) &universalThread, fuel_consumption);
-	pthread_create(&espeed_thread_id, NULL, (void *) &universalThread, engine_speed);
-	pthread_create(&cool_thread_id, NULL, (void *) &universalThread, engine_coolant_temp);
-	pthread_create(&gear_thread_id, NULL, (void *) &universalThread, current_gear);
-	pthread_create(&oiltmp_thread_id, NULL, (void *) &universalThread, transmission_oil_temperature);
-	pthread_create(&vspeed_thread_id, NULL, (void *) &universalThread, vehicle_speed);
-	pthread_create(&accSpeed_thread_id, NULL, (void *) &universalThread, acceleration_speed_longitudinal);
-	pthread_create(&brake_thread_id, NULL, (void *) &universalThread, indication_of_brake_switch);
+	pthread_create(&fuel_thread_id, NULL, (void *) &producer, fuel_consumption);
+	pthread_create(&espeed_thread_id, NULL, (void *) &producer, engine_speed);
+	pthread_create(&cool_thread_id, NULL, (void *) &producer, engine_coolant_temp);
+	pthread_create(&gear_thread_id, NULL, (void *) &producer, current_gear);
+	pthread_create(&oiltmp_thread_id, NULL, (void *) &producer, transmission_oil_temperature);
+	pthread_create(&vspeed_thread_id, NULL, (void *) &producer, vehicle_speed);
+	pthread_create(&accSpeed_thread_id, NULL, (void *) &producer, acceleration_speed_longitudinal);
+	pthread_create(&brake_thread_id, NULL, (void *) &producer, indication_of_brake_switch);
 
     pthread_join(fuel_thread_id, NULL);
     pthread_join(espeed_thread_id, NULL);
