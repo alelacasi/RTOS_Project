@@ -15,103 +15,21 @@
 #include <errno.h>
 #include <math.h>
 
+void *producer(void *ptr);
+void *consumer();
 
-#define ONE_THOUSAND	1000
-#define ONE_MILLION		1000000
-/* offset and period are in microsends. */
-#define OFFSET 1000000
-#define PERIOD 1000000
+int value1, value2, value3, value4, value5, value6, value7, value8;
 
-sigset_t sigst;
-
-double currentTime = 0.0;
-
-void *universalthread(void *ptr);
-
-struct thread_args
-{
+struct thread_args{
     char *filename;
     int loc;
-    int sleep_ms;
-    int looptime;
+    int period;
+    int *value;
 };
 
-
-
-int start_periodic_timer(uint64_t offset, int period) {
-	struct itimerspec timer_spec;
-	struct sigevent sigev;
-	timer_t timer;
-	const int signal = SIGALRM;
-	int res;
-
-	/* set timer parameters */
-	timer_spec.it_value.tv_sec = offset / ONE_MILLION;
-	timer_spec.it_value.tv_nsec = (offset % ONE_MILLION) * ONE_THOUSAND;
-	timer_spec.it_interval.tv_sec = period / ONE_MILLION;
-	timer_spec.it_interval.tv_nsec = (period % ONE_MILLION) * ONE_THOUSAND;
-
-	sigemptyset(&sigst); // initialize a signal set
-	sigaddset(&sigst, signal); // add SIGALRM to the signal set
-	sigprocmask(SIG_BLOCK, &sigst, NULL); //block the signal
-
-	/* set the signal event a timer expiration */
-	memset(&sigev, 0, sizeof(struct sigevent));
-	sigev.sigev_notify = SIGEV_SIGNAL;
-	sigev.sigev_signo = signal;
-
-	/* create timer */
-	res = timer_create(CLOCK_MONOTONIC, &sigev, &timer);
-
-	if (res < 0) {
-		perror("Timer Create");
-		exit(-1);
-	}
-
-	/* activate the timer */
-	return timer_settime(timer, 0, &timer_spec, NULL);
-}
-
-static void task_body(void) {
-
-	static int cycles = 0;
-
-	while (1){
-
-	int dummy;
-	/* suspend calling process until a signal is pending */
-	sigwait(&sigst, &dummy);
-
-
-	static uint64_t start;
-	uint64_t current;
-	struct timespec tv;
-
-	if (start == 0) {
-		clock_gettime(CLOCK_MONOTONIC, &tv);
-		start = tv.tv_sec * ONE_THOUSAND + tv.tv_nsec / ONE_MILLION;
-	}
-
-	clock_gettime(CLOCK_MONOTONIC, &tv);
-	current = tv.tv_sec * ONE_THOUSAND + tv.tv_nsec / ONE_MILLION;
-
-//	if (cycles > 0) {
-//		fprintf(stderr, "Ave interval between instances: %f milliseconds\n",
-//			(double)(current-start));
-//	}
-
-	currentTime = (double)(current-start);
-	printf("%f\n", currentTime);
-	cycles++;
-
-	}
-}
-
-const char* getfield(char* line, int num)
-{
+const char* getfield(char* line, int num){
 	const char* tok;
-    for (tok = strtok(line, ","); tok && *tok; tok = strtok(NULL, ",\n"))
-    {
+    for (tok = strtok(line, ","); tok && *tok; tok = strtok(NULL, ",\n")){
         if (!--num)
             return tok;
     }
@@ -119,48 +37,72 @@ const char* getfield(char* line, int num)
 }
 
 
-void *universalThread(void *ptr)
-{
-	struct thread_args *args = ptr;
-	double executionTimer = 0;
+void *producer(void *ptr){
 
-	FILE* stream = fopen("/home/dataset.csv", "r");
+	struct thread_args *args = (struct thread_args *)ptr;
+
+	FILE* stream = fopen("/home/cardata.csv", "r");
     char line[2048];
+    fgets(line, 2048, stream);
     char* value;
+    int *stored = args->value;
+    int num = args->loc;
+    int count = 0;
 
     while (1){
 
-		fgets(line, 2048, stream);
+    	//Read a new line, set value to that field
+    	fgets(line, 2048, stream);
+        char* tmp = strdup(line);
 
-		while (executionTimer < 1000) {
+        //If you reach the end of the document, break
+        if(tmp == NULL)
+        	break;
 
-			char* tmp = strdup(line);
-			free(tmp);
-			printf("%s", args->filename);
-			value = getfield(tmp, args->loc);
-			printf(": %s\n", value);
-			executionTimer += args->sleep_ms;
-			usleep(args->sleep_ms*1000);
+    	//Fetch value
+    	value = getfield(tmp, num);
 
+        while (count<=1000){
+
+        	//Store value in global variable
+            *stored = atoi(value);
+
+            //Sleep for period (2ms offset due to scheduler discrepancy
+            usleep(args->period*1000 - 2);
+            count += args->period;
+        }
+
+        free(tmp);
+
+        //Each row accounts for 1000ms
+        count -= 1000;
+
+    }
+
+	return(NULL);
+}
+
+void *consumer()
+{
+
+	while(1) {
+		printf("--------------Displaying Sensor Data--------------\n");
+		printf("Fuel Consumption			: %i\n", value1);
+		printf("Engine Speed				: %i\n", value2);
+		printf("Engine Coolant Temperature		: %i\n", value3);
+		printf("Engine Gear				: %i\n", value4);
+		printf("Transmission Oil Temperature		: %i\n", value5);
+		printf("Vehicle Speed				: %i\n", value6);
+		printf("Acceleration Speed Longitudinal Temp	: %i\n", value7);
+		printf("Indication Of Brake Switch		: %i\n", value8);
+		printf("--------------------------------------------------\n");
+		delay(25);
 	}
-
-	executionTimer -= 1000;
-
-  }
-
 
 	return(NULL);
 }
 
 int main (int argc, char *argv[]) {
-	int res;
-
-	//set and activate a timer
-	res = start_periodic_timer(OFFSET, PERIOD);
-	if (res < 0 ){
-		perror("Start periodic timer");
-		return -1;
-	}
 
 	struct thread_args* fuel_consumption;
 	struct thread_args* engine_speed;
@@ -171,66 +113,90 @@ int main (int argc, char *argv[]) {
 	struct thread_args* acceleration_speed_longitudinal;
 	struct thread_args* indication_of_brake_switch;
 
-	fuel_consumption = malloc(sizeof(struct thread_args));
+    pthread_t	fuel_thread_id;
+    pthread_t	espeed_thread_id;
+    pthread_t	cool_thread_id;
+    pthread_t	gear_thread_id;
+    pthread_t   oiltmp_thread_id;
+    pthread_t   vspeed_thread_id;
+    pthread_t   accSpeed_thread_id;
+    pthread_t   brake_thread_id;
+    pthread_t   consumer_thread_id;
+
+	fuel_consumption = (struct thread_args *) malloc(sizeof(struct thread_args));
     fuel_consumption->filename = "fuel_consumption";
     fuel_consumption->loc = 1;
-    fuel_consumption->sleep_ms = 10;
-    fuel_consumption->looptime = 100;
+    fuel_consumption->period = 10;
+    fuel_consumption->value = &value1;
 
-    engine_speed = malloc(sizeof(struct thread_args));
-	engine_speed->filename = "engine_speed";    //10ms  @1
-	engine_speed->loc = 13;    //10ms  @1
-	engine_speed->sleep_ms = 500;    //10ms  @1
-	engine_speed->looptime = 2;    //10ms  @1
+    engine_speed = (struct thread_args *) malloc(sizeof(struct thread_args));
+	engine_speed->filename = "engine_speed";
+	engine_speed->loc = 13;
+	engine_speed->period = 500;
+	engine_speed->value = &value2;
 
-	engine_coolant_temp = malloc(sizeof(struct thread_args));
-	engine_coolant_temp->filename = "engine_coolant_temp";    //10ms  @1
-	engine_coolant_temp->loc = 18;    //10ms  @1
-	engine_coolant_temp->sleep_ms = 2,000;    //10ms  @1
-	engine_coolant_temp->looptime = 0;    //10ms  @1
+	engine_coolant_temp = (struct thread_args *) malloc(sizeof(struct thread_args));
+	engine_coolant_temp->filename = "engine_coolant_temp";
+	engine_coolant_temp->loc = 18;
+	engine_coolant_temp->period = 2000;
+	engine_coolant_temp->value = &value3;
 
-	current_gear = malloc(sizeof(struct thread_args));
-	current_gear->filename = "current_gear";    //10ms  @1
-	current_gear->loc = 34;    //10ms  @1
-	current_gear->sleep_ms = 100;    //10ms  @1
-	current_gear->looptime = 10;    //10ms  @1
+	current_gear = (struct thread_args *) malloc(sizeof(struct thread_args));
+	current_gear->filename = "current_gear";
+	current_gear->loc = 34;
+	current_gear->period = 100;
+	current_gear->value = &value4;
 
-	transmission_oil_temperature = malloc(sizeof(struct thread_args));
-	transmission_oil_temperature->filename = "transmission_oil_temperature";    //10ms  @1
-	transmission_oil_temperature->loc = 35;    //10ms  @1
-	transmission_oil_temperature->sleep_ms = 5000;    //10ms  @1
-	transmission_oil_temperature->looptime = 0;    //10ms  @1
+	transmission_oil_temperature = (struct thread_args *) malloc(sizeof(struct thread_args));
+	transmission_oil_temperature->filename = "transmission_oil_temperature";
+	transmission_oil_temperature->loc = 35;
+	transmission_oil_temperature->period = 5000;
+	transmission_oil_temperature->value = &value5;
 
-	vehicle_speed = malloc(sizeof(struct thread_args));
-	vehicle_speed->filename = "vehicle_speed";    //10ms  @1
-	vehicle_speed->loc = 44;    //10ms  @1
-	vehicle_speed->sleep_ms = 100;    //10ms  @1
-	vehicle_speed->looptime = 10;    //10ms  @1
+	vehicle_speed = (struct thread_args *) malloc(sizeof(struct thread_args));
+	vehicle_speed->filename = "vehicle_speed";
+	vehicle_speed->loc = 44;
+	vehicle_speed->period = 100;
+	vehicle_speed->value = &value6;
 
-	acceleration_speed_longitudinal = malloc(sizeof(struct thread_args));
-	acceleration_speed_longitudinal->filename = "acceleration_speed_longitudinal";    //10ms  @1
-	acceleration_speed_longitudinal->loc = 45;    //10ms  @1
-	acceleration_speed_longitudinal->sleep_ms = 150;    //10ms  @1
-	acceleration_speed_longitudinal->looptime = 7;    //10ms  @1
+	acceleration_speed_longitudinal = (struct thread_args *) malloc(sizeof(struct thread_args));
+	acceleration_speed_longitudinal->filename = "acceleration_speed_longitudinal";
+	acceleration_speed_longitudinal->loc = 45;
+	acceleration_speed_longitudinal->period = 150;
+	acceleration_speed_longitudinal->value = &value7;
 
-	indication_of_brake_switch = malloc(sizeof(struct thread_args));
-	indication_of_brake_switch->filename = "indication_of_brake_switch";    //10ms  @1
-	indication_of_brake_switch->loc = 46;    //10ms  @1
-	indication_of_brake_switch->sleep_ms = 100;    //10ms  @1
-	indication_of_brake_switch->looptime = 10;    //10ms  @1
-
-    //Timer
-	pthread_create(NULL, NULL, (void *) &task_body, NULL);
+	indication_of_brake_switch = (struct thread_args *) malloc(sizeof(struct thread_args));
+	indication_of_brake_switch->filename = "indication_of_brake_switch";
+	indication_of_brake_switch->loc = 46;
+	indication_of_brake_switch->period = 100;
+	indication_of_brake_switch->value = &value8;
 
 	//Producers
-	//pthread_create(NULL, NULL, (void *) &universalThread, fuel_consumption);
-	//pthread_create(NULL, NULL, (void *) &universalThread, engine_speed);
-	//pthread_create(NULL, NULL, (void *) &universalThread, engine_coolant_temp);
-	//pthread_create(NULL, NULL, (void *) &universalThread, current_gear);
-	//pthread_create(NULL, NULL, (void *) &universalThread, transmission_oil_temperature);
-	//pthread_create(NULL, NULL, (void *) &universalThread, vehicle_speed);
-	//pthread_create(NULL, NULL, (void *) &universalThread, acceleration_speed_longitudinal);
-	//pthread_create(NULL, NULL, (void *) &universalThread, indication_of_brake_switch);
+	printf("Producers Creation...\n");
+	pthread_create(&fuel_thread_id, NULL, (void *) &producer, fuel_consumption);
+	pthread_create(&espeed_thread_id, NULL, (void *) &producer, engine_speed);
+	pthread_create(&cool_thread_id, NULL, (void *) &producer, engine_coolant_temp);
+	pthread_create(&gear_thread_id, NULL, (void *) &producer, current_gear);
+	pthread_create(&oiltmp_thread_id, NULL, (void *) &producer, transmission_oil_temperature);
+	pthread_create(&vspeed_thread_id, NULL, (void *) &producer, vehicle_speed);
+	pthread_create(&accSpeed_thread_id, NULL, (void *) &producer, acceleration_speed_longitudinal);
+	pthread_create(&brake_thread_id, NULL, (void *) &producer, indication_of_brake_switch);
+
+	//Producers
+	printf("Consumer Creation...\n");
+	pthread_create(&consumer_thread_id, NULL, &consumer, NULL);
+
+    pthread_join(fuel_thread_id, NULL);
+    pthread_join(espeed_thread_id, NULL);
+    pthread_join(cool_thread_id, NULL);
+    pthread_join(gear_thread_id, NULL);
+    pthread_join(oiltmp_thread_id, NULL);
+    pthread_join(vspeed_thread_id, NULL);
+    pthread_join(accSpeed_thread_id, NULL);
+    pthread_join(brake_thread_id, NULL);
+    pthread_join(consumer_thread_id, NULL);
+
+    printf("Program Ending...\n");
 
 	pause();
 
