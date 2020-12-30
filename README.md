@@ -1,4 +1,4 @@
-# COEN320-Project
+# RTOS-Project
 RTOS scheduler
 
 Detailed instructions to compile, execute and test the code in the remote real-time workstations.
